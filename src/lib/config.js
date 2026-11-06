@@ -1,0 +1,17 @@
+export const config = {
+  pageSize: 20,
+  datasetPageSize: 10,
+  api: "https://api.obis.org/v3/",
+  tiles: "https://api.obis.org/occurrence/tile/{x}/{y}/{z}.mvt",
+  download: "https://api.obis.org/download2/",
+  s3: "https://obis-datasets.ams3.digitaloceanspaces.com/",
+  portal: "https://obis.org/",
+  maxDownloadRecords: 20000000,
+  landTiles: "https://tiles.obis.org/land_tiles/{z}/{x}/{y}.pbf",
+  coastlineTiles: "https://tiles.obis.org/coastlines_tiles/{z}/{x}/{y}.pbf",
+  maxZoom: 12,
+  mapSurface: "#f8fafc",
+  coastline: "#334155",
+  startYear: 1900,
+  glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
+};
