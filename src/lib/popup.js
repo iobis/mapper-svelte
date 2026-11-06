@@ -1,73 +1,126 @@
 import { config } from "./config.js";
 import { formatNumber } from "./format.js";
 
-const PREFERRED = [
-  "scientificName",
-  "aphiaID",
-  "dataset_id",
-  "node_id",
-  "date_year",
-  "eventDate",
-  "decimalLongitude",
-  "decimalLatitude",
-  "minimumDepthInMeters",
-  "maximumDepthInMeters",
-  "institutionCode",
-  "collectionCode",
-  "catalogNumber",
-  "id",
-];
-
-function link(href, text) {
-  const anchor = document.createElement("a");
-  anchor.href = href;
-  anchor.target = "_blank";
-  anchor.rel = "noopener noreferrer";
-  anchor.textContent = text == null ? "" : String(text);
-  return anchor;
+function years(range) {
+  if (!range || range[0] == null || range[1] == null) return null;
+  const start = Math.round(range[0]);
+  const end = Math.round(range[1]);
+  return start === end ? String(start) : `${start}–${end}`;
 }
 
-function cellValue(record, key) {
-  const value = record[key];
-  if (value == null) return document.createTextNode("");
-  if (key === "scientificName" && record.aphiaID) return link(`${config.portal}taxon/${record.aphiaID}`, value);
-  if (key === "aphiaID") return link(`${config.portal}taxon/${value}`, value);
-  if (key === "dataset_id") return link(`${config.portal}dataset/${value}`, value);
-  if (key === "node_id") return link(`${config.portal}node/${value}`, value);
-  if (key === "id") return link(`${config.api}occurrence/${value}`, value);
-  return document.createTextNode(String(value));
+function countLabel(value, singular, plural) {
+  const count = Number(value) || 0;
+  return `${formatNumber(count)} ${count === 1 ? singular : plural}`;
 }
 
-export function popupNode(response) {
+function plain(value) {
+  return String(value || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function datasetItem(record) {
+  const item = document.createElement("li");
+  const line = document.createElement("div");
+  line.className = "dataset-line";
+  const link = document.createElement("a");
+  link.href = `${config.portal}dataset/${record.id}`;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.textContent = record.title || record.id;
+  const count = document.createElement("span");
+  count.textContent = `${formatNumber(record.records)} records`;
+  line.append(link, count);
+  item.append(line);
+  const abstract = plain(record.abstract);
+  if (abstract) {
+    const text = document.createElement("p");
+    text.className = "abstract";
+    text.textContent = abstract;
+    item.append(text);
+  }
+  return item;
+}
+
+export function popupNode({ statistics, title, pageSize, firstPage, loadPage }) {
   const root = document.createElement("div");
   root.className = "popup";
-  const intro = document.createElement("p");
-  const total = response?.total ?? 0;
-  let text = `Found ${formatNumber(total)} record${total === 1 ? "" : "s"}`;
-  if (total > 10) text += ", showing the first 10";
-  intro.textContent = `${text}.`;
-  root.append(intro);
-
-  for (const record of response?.results || []) {
-    const table = document.createElement("table");
-    const keys = Object.keys(record).sort((a, b) => {
-      const ia = PREFERRED.indexOf(a);
-      const ib = PREFERRED.indexOf(b);
-      if (ia === -1 && ib === -1) return a.localeCompare(b);
-      if (ia === -1) return 1;
-      if (ib === -1) return -1;
-      return ia - ib;
-    });
-    for (const key of keys) {
-      const row = document.createElement("tr");
-      const label = document.createElement("td");
-      label.textContent = key;
-      const value = document.createElement("td");
-      value.append(cellValue(record, key));
-      row.append(label, value);
-      table.append(row);
-    }
-    root.append(table);
+  if (title) {
+    const heading = document.createElement("p");
+    heading.className = "popup-title";
+    heading.textContent = title;
+    root.append(heading);
   }
+
+  const records = statistics?.records ?? 0;
+  const overview = document.createElement("p");
+  overview.className = "popup-overview";
+  if (!records) {
+    overview.textContent = "No records in this cell.";
+    root.append(overview);
+    return root;
+  }
+
+  const parts = [
+    countLabel(records, "record", "records"),
+    countLabel(statistics.species, "species", "species"),
+    countLabel(statistics.taxa, "taxon", "taxa"),
+    countLabel(statistics.datasets, "dataset", "datasets"),
+  ];
+  const yearLabel = years(statistics.yearrange);
+  if (yearLabel) parts.push(yearLabel);
+  overview.textContent = parts.join(" · ");
+  root.append(overview);
+
+  const datasets = document.createElement("div");
+  datasets.className = "popup-datasets";
+  const pager = document.createElement("div");
+  pager.className = "pager";
+  const previous = document.createElement("button");
+  previous.type = "button";
+  previous.textContent = "Previous";
+  const pageLabel = document.createElement("span");
+  const next = document.createElement("button");
+  next.type = "button";
+  next.textContent = "Next";
+  pager.append(previous, pageLabel, next);
+  const list = document.createElement("ul");
+  list.className = "dataset-list";
+  datasets.append(pager, list);
+  root.append(datasets);
+
+  let pageIndex = 0;
+  let page = firstPage || [];
+  let loading = false;
+
+  function paint() {
+    pageLabel.textContent = String(pageIndex + 1);
+    previous.disabled = pageIndex === 0 || loading;
+    next.disabled = page.length < pageSize || loading;
+    list.replaceChildren(...(page.length ? page.map(datasetItem) : []));
+    if (!page.length) {
+      const empty = document.createElement("li");
+      empty.textContent = "No datasets.";
+      list.append(empty);
+    }
+  }
+
+  async function go(index) {
+    if (loading || index < 0) return;
+    if (index > pageIndex && page.length < pageSize) return;
+    loading = true;
+    paint();
+    try {
+      page = await loadPage(index);
+      pageIndex = index;
+    } catch {
+      // Keep the page that is already on screen.
+    } finally {
+      loading = false;
+      paint();
+    }
+  }
+
+  previous.addEventListener("click", () => go(pageIndex - 1));
+  next.addEventListener("click", () => go(pageIndex + 1));
+  paint();
   return root;
 }

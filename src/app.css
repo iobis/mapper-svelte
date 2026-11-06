@@ -532,13 +532,36 @@ th, td {
 
 .typeahead small { color: var(--muted); }
 
-.popup { max-height: 280px; overflow: auto; }
+.popup {
+  display: flex;
+  flex-direction: column;
+  width: 320px;
+  max-height: 320px;
+}
 
-.popup p { margin: 0 0 8px; }
+.popup-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
 
-.popup table { margin-bottom: 12px; }
+.popup-overview {
+  margin: 0 0 8px;
+  color: var(--muted);
+  line-height: 1.35;
+}
 
-.popup td:first-child { color: var(--muted); width: 42%; }
+.popup-datasets {
+  overflow: auto;
+  min-height: 0;
+}
+
+.popup .pager { margin-bottom: 4px; }
+
+.popup .dataset-list li { padding: 6px 0; }
+
+.popup .dataset-line a { flex: 1; min-width: 0; }
+
+.popup .abstract { max-width: none; }
 
 .maplibregl-popup-content { font-family: "Open Sans", sans-serif; font-size: 12px; }
 

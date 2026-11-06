@@ -8,7 +8,8 @@
   import { config } from "../lib/config.js";
   import { fillColorExpression, legendSwatch, schemeFor, LEGEND_LABELS } from "../lib/palettes.js";
   import { popupNode } from "../lib/popup.js";
-  import { createQuery, criteriaFromLayer, polygonToWkt, wktToPolygon } from "../lib/query.js";
+  import { cellsPerTile, encodeGeohash, gridPrecision } from "../lib/grid.js";
+  import { createQuery, criteriaFromLayer, describe, polygonToWkt, wktToPolygon } from "../lib/query.js";
   import { app, toast } from "../lib/state.svelte.js";
 
   // Served from public/ so Vite does not inject its client into the worker.
@@ -85,7 +86,7 @@
   }
 
   function occurrenceUrl(query, points) {
-    const prefix = points ? "tiletype=point&cellspertile=256&" : "";
+    const prefix = points ? `tiletype=point&cellspertile=${cellsPerTile(true)}&` : "";
     return `${config.tiles}?${prefix}${query}`;
   }
 
@@ -298,16 +299,26 @@
       const layer = app.layers.find((item) => String(item.id) === match?.[1]);
       if (!layer) return;
       try {
-        const response = await api.geoPoint(
-          criteriaFromLayer(layer),
-          event.lngLat.lng,
+        const criteria = criteriaFromLayer(layer);
+        criteria.geometry = encodeGeohash(
           event.lngLat.lat,
-          map.getZoom(),
-          createQuery
+          event.lngLat.lng,
+          gridPrecision(map.getZoom(), layer.pointsMode),
         );
-        new Popup({ maxWidth: "380px" })
+        const pageQuery = (index) => ({ ...criteria, size: config.datasetPageSize, skip: index * config.datasetPageSize });
+        const [statistics, datasets] = await Promise.all([
+          api.statistics(criteria, createQuery),
+          api.datasets(pageQuery(0), createQuery),
+        ]);
+        new Popup({ maxWidth: "360px" })
           .setLngLat(event.lngLat)
-          .setDOMContent(popupNode(response))
+          .setDOMContent(popupNode({
+            statistics,
+            title: describe(layer).join(" · "),
+            pageSize: config.datasetPageSize,
+            firstPage: datasets.results || [],
+            loadPage: (index) => api.datasets(pageQuery(index), createQuery).then((data) => data.results || []),
+          }))
           .addTo(map);
       } catch {
         toast("Could not load records for this location");
