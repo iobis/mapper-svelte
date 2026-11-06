@@ -159,9 +159,15 @@ a { color: var(--accent); }
   gap: 8px;
 }
 
-details { border-top: 1px solid var(--line); padding-top: 8px; }
+details { border-top: 1px solid var(--line); }
 
-summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }
+summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin: 0;
+  padding: 16px 0 8px;
+  line-height: 1.2;
+}
 
 label, .check { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
 
