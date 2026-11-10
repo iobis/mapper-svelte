@@ -30,6 +30,39 @@
     ["datasets", "Datasets"],
   ];
 
+  const occurrenceColumns = [
+    { id: "scientificName", fixed: true },
+    { id: "dataset", default: true },
+    { id: "occurrenceID", default: true },
+    { id: "eventDate", fixed: true },
+    { id: "decimalLongitude", fixed: true },
+    { id: "decimalLatitude", fixed: true },
+    { id: "phylum", default: true },
+    { id: "class", default: true },
+    { id: "order" },
+    { id: "family" },
+    { id: "genus" },
+    { id: "verbatimIdentification" },
+    { id: "identificationRemarks" },
+    { id: "eventID" },
+    { id: "parentEventID" },
+    { id: "fieldNumber" },
+    { id: "taxonConceptID" },
+    { id: "institutionID" },
+    { id: "collectionID" },
+    { id: "datasetID" },
+    { id: "institutionCode" },
+    { id: "collectionCode" },
+    { id: "catalogNumber" },
+    { id: "recordNumber" },
+    { id: "materialEntityID" },
+    { id: "associatedSequences" },
+    { id: "materialSampleID" },
+  ];
+
+  let visibleColumns = $state(Object.fromEntries(occurrenceColumns.filter((column) => !column.fixed).map((column) => [column.id, Boolean(column.default)])));
+  let activeColumns = $derived(occurrenceColumns.filter((column) => column.fixed || visibleColumns[column.id]));
+
   function buildTimeline(rows) {
     const counts = new Map();
     for (const item of rows || []) {
@@ -62,6 +95,12 @@
     if (!table.data.length || table.data.length < pageSize) return false;
     if (table.total == null) return true;
     return pageEnd(table, pageSize) < table.total;
+  }
+
+  function cellText(value) {
+    if (value == null || value === "") return "";
+    if (Array.isArray(value)) return value.filter((item) => item != null && item !== "").join(", ");
+    return String(value);
   }
 
   onMount(() => {
@@ -118,25 +157,22 @@
 
   <div class="data-scroll">
     {#if section === "occurrences"}
-      {@render pager(app.dataTable, config.pageSize, "record", "records", previousOccurrences, nextOccurrences)}
+      {@render pager(app.dataTable, config.pageSize, "record", "records", previousOccurrences, nextOccurrences, columnPicker)}
       <div class="table-wrap">
         <table class="data-table">
           <thead>
-            <tr><th>Scientific name</th><th>Event date</th><th>Longitude</th><th>Latitude</th><th>Institution</th><th>Dataset</th></tr>
+            <tr>
+              {#each activeColumns as column (column.id)}
+                <th>{column.id}</th>
+              {/each}
+            </tr>
           </thead>
           <tbody>
             {#each app.dataTable.data as record (record.id)}
               <tr>
-                <td><a href="{config.api}occurrence/{record.id}" target="_blank" rel="noopener noreferrer">{record.scientificName || record.id}</a></td>
-                <td>{record.eventDate || ""}</td>
-                <td>{formatCoordinate(record.decimalLongitude)}</td>
-                <td>{formatCoordinate(record.decimalLatitude)}</td>
-                <td>{record.institutionCode || ""}</td>
-                <td>
-                  {#if record.dataset_id}
-                    <a class="dataset-ref" href="{config.portal}dataset/{record.dataset_id}" target="_blank" rel="noopener noreferrer" title={record.datasetTitle || record.dataset_id}>{record.datasetTitle || record.dataset_id}</a>
-                  {/if}
-                </td>
+                {#each activeColumns as column (column.id)}
+                  <td>{@render occurrenceCell(record, column)}</td>
+                {/each}
               </tr>
             {/each}
           </tbody>
@@ -188,7 +224,39 @@
 </div>
 </div>
 
-{#snippet pager(table, pageSize, singular, plural, previous, next)}
+{#snippet occurrenceCell(record, column)}
+  {#if column.id === "scientificName"}
+    <a href="{config.api}occurrence/{record.id}" target="_blank" rel="noopener noreferrer">{record.scientificName || record.id}</a>
+  {:else if column.id === "dataset"}
+    {#if record.dataset_id}
+      <a class="dataset-ref" href="{config.portal}dataset/{record.dataset_id}" target="_blank" rel="noopener noreferrer" title={record.datasetTitle || record.dataset_id}>{record.datasetTitle || record.dataset_id}</a>
+    {/if}
+  {:else if column.id === "decimalLongitude" || column.id === "decimalLatitude"}
+    {formatCoordinate(record[column.id])}
+  {:else}
+    {cellText(record[column.id])}
+  {/if}
+{/snippet}
+
+{#snippet columnPicker()}
+  <details class="column-picker">
+    <summary>Columns</summary>
+    <div class="column-menu">
+      {#each occurrenceColumns as column (column.id)}
+        <label class="check">
+          {#if column.fixed}
+            <input type="checkbox" checked disabled />
+          {:else}
+            <input type="checkbox" bind:checked={visibleColumns[column.id]} />
+          {/if}
+          {column.id}
+        </label>
+      {/each}
+    </div>
+  </details>
+{/snippet}
+
+{#snippet pager(table, pageSize, singular, plural, previous, next, tools)}
   {@const start = table.data.length ? table.pageIndex * pageSize + 1 : 0}
   {@const end = pageEnd(table, pageSize)}
   <div class="pager">
@@ -205,5 +273,6 @@
         {formatNumber(start)}–{formatNumber(end)} of {formatNumber(table.total)} {table.total === 1 ? singular : plural}
       {/if}
     </span>
+    {#if tools}{@render tools()}{/if}
   </div>
 {/snippet}

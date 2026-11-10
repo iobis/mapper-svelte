@@ -458,8 +458,43 @@ input[type="text"], input[type="email"], input[type="number"], select, textarea 
 
 .section-tabs {
   display: flex;
+  align-items: center;
   gap: 2px;
 }
+
+.pager .column-picker { position: relative; margin-left: 8px; border-top: 0; }
+
+.column-picker summary {
+  font-weight: 400;
+  margin: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  line-height: 1.2;
+  list-style: none;
+}
+
+.column-picker summary::marker { content: none; }
+
+.column-picker summary::-webkit-details-marker { display: none; }
+
+.column-menu {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 4px);
+  right: 0;
+  width: 230px;
+  max-height: 320px;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  padding: 6px 8px;
+}
+
+.column-menu .check { margin: 3px 0; }
 
 .section-tabs button {
   border: 0;
