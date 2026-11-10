@@ -111,6 +111,10 @@ export function years(criteria, createQuery) {
   return getJson(`${config.api}statistics/years?${createQuery(criteria)}`);
 }
 
+export function taxonomy(criteria, createQuery) {
+  return getJson(`${config.api}statistics/taxonomy?${createQuery(criteria)}`);
+}
+
 export function geoPoint(criteria, x, y, z, createQuery) {
   const zoom = z == null ? "" : `/${Math.round(z)}`;
   return getJson(`${config.api}occurrence/point/${x}/${y}${zoom}?${createQuery(criteria)}`);

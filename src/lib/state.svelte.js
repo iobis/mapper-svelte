@@ -2,6 +2,7 @@ import * as api from "./api.js";
 import { config } from "./config.js";
 import { DEFAULT_OPACITY } from "./palettes.js";
 import { validEmails } from "./format.js";
+import { phylumClassTree } from "./treemap.js";
 import {
   createQuery,
   criteriaFromLayer,
@@ -58,6 +59,7 @@ export const app = $state({
   selectedLayerId: null,
   statistics: null,
   graph: [],
+  taxonomy: null,
   dataLoading: false,
   dataTable: { data: [], pageIndex: 0, after: [null], total: null },
   checklistTable: { data: [], pageIndex: 0, skip: 0, total: null },
@@ -199,9 +201,10 @@ export async function viewData(layer) {
   app.datasetTable = { data: [], pageIndex: 0, skip: 0, total: null };
   app.statistics = null;
   app.graph = [];
+  app.taxonomy = null;
   app.dataLoading = true;
   try {
-    await Promise.all([fetchOccurrences(), fetchChecklist(), fetchDatasets(), fetchStatistics(), fetchGraph()]);
+    await Promise.all([fetchOccurrences(), fetchChecklist(), fetchDatasets(), fetchStatistics(), fetchGraph(), fetchTaxonomy()]);
   } catch {
     toast("Could not load the data view");
   } finally {
@@ -275,6 +278,17 @@ export async function fetchGraph() {
     app.graph = Array.isArray(data) ? data : data.results || [];
   } catch {
     app.graph = [];
+  }
+}
+
+export async function fetchTaxonomy() {
+  const layer = selectedLayer();
+  if (!layer) return;
+  try {
+    const data = await api.taxonomy(criteriaFromLayer(layer), createQuery);
+    app.taxonomy = phylumClassTree(data);
+  } catch {
+    app.taxonomy = null;
   }
 }
 

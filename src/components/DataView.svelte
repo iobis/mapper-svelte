@@ -1,5 +1,6 @@
 <script>
   import { onMount } from "svelte";
+  import TaxonomyTreemap from "./TaxonomyTreemap.svelte";
   import { config } from "../lib/config.js";
   import { formatCoordinate, formatNumber } from "../lib/format.js";
   import {
@@ -134,17 +135,31 @@
       {/if}
     </div>
 
-    {#if timeline.length}
-      <div class="chart" aria-label="Records by year">
-        {#each timeline as bar (bar.year)}
-          <div class="bar-wrap" title="{bar.year}: {formatNumber(bar.records)}">
-            <i style:height="{bar.records ? (bar.records / maxRecords) * 100 : 0}%" style:min-height={bar.records ? "1px" : "0"}></i>
+    {#if timeline.length || app.taxonomy || app.dataLoading}
+      <div class="charts" class:charts-split={timeline.length > 0 && (app.taxonomy || app.dataLoading)}>
+        {#if app.taxonomy}
+          <div>
+            <TaxonomyTreemap tree={app.taxonomy} />
+            <p class="taxonomy-caption">Records by phylum and class.</p>
           </div>
-        {/each}
-      </div>
-      <div class="chart-years">
-        <span>{firstYear}</span>
-        <span>{lastYear}</span>
+        {:else if app.dataLoading}
+          <p class="muted taxonomy-loading">Loading taxonomy…</p>
+        {/if}
+        {#if timeline.length}
+          <div>
+            <div class="chart" aria-label="Records by year">
+              {#each timeline as bar (bar.year)}
+                <div class="bar-wrap" title="{bar.year}: {formatNumber(bar.records)}">
+                  <i style:height="{bar.records ? (bar.records / maxRecords) * 100 : 0}%" style:min-height={bar.records ? "1px" : "0"}></i>
+                </div>
+              {/each}
+            </div>
+            <div class="chart-years">
+              <span>{firstYear}</span>
+              <span>{lastYear}</span>
+            </div>
+          </div>
+        {/if}
       </div>
     {/if}
 
