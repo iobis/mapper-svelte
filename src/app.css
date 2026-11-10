@@ -389,17 +389,29 @@ input[type="text"], input[type="email"], input[type="number"], select, textarea 
   padding: 8px 12px;
 }
 
+.data-modal {
+  position: absolute;
+  z-index: 4;
+  top: 16px;
+  right: 16px;
+  bottom: 16px;
+  left: 16px;
+}
+
 .data-view {
   position: absolute;
   inset: 0;
-  z-index: 4;
   background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .data-head {
-  padding: 14px 20px 0;
+  padding: 8px 12px 0;
   border-bottom: 1px solid var(--line);
   background: #fff;
 }
@@ -407,30 +419,34 @@ input[type="text"], input[type="email"], input[type="number"], select, textarea 
 .data-top {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 .data-summary {
   margin: 0;
   min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .figures {
   display: flex;
-  gap: 28px;
-  margin: 14px 0 8px;
+  gap: 16px;
+  margin: 6px 0 4px;
 }
 
-.figures p { margin: 0; display: flex; flex-direction: column; gap: 1px; }
+.figures p { margin: 0; display: flex; flex-direction: column; gap: 0; }
 
-.figures strong { font-size: 18px; font-weight: 600; }
+.figures strong { font-size: 14px; font-weight: 600; }
 
 .figures span, .chart-years { color: var(--muted); }
 
 .chart-years {
   display: flex;
   justify-content: space-between;
-  margin: 4px 0 12px;
+  margin: 2px 0 4px;
 }
 
 .section-tabs {
@@ -443,7 +459,7 @@ input[type="text"], input[type="email"], input[type="number"], select, textarea 
   border-bottom: 2px solid transparent;
   border-radius: 0;
   background: transparent;
-  padding: 8px 12px;
+  padding: 6px 10px;
 }
 
 .section-tabs button.active {
@@ -452,7 +468,7 @@ input[type="text"], input[type="email"], input[type="number"], select, textarea 
   font-weight: 600;
 }
 
-.data-scroll { overflow: auto; padding: 14px 20px 40px; }
+.data-scroll { overflow: auto; flex: 1; min-height: 0; padding: 8px 12px 12px; }
 
 table { border-collapse: collapse; width: 100%; }
 
@@ -495,8 +511,8 @@ th, td {
   display: flex;
   align-items: flex-end;
   gap: 1px;
-  height: 96px;
-  margin-top: 4px;
+  height: 48px;
+  margin-top: 2px;
   overflow-x: auto;
 }
 

@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from "svelte";
   import { config } from "../lib/config.js";
   import { formatCoordinate, formatNumber } from "../lib/format.js";
   import {
@@ -29,13 +30,22 @@
   function plain(value) {
     return String(value || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
   }
+
+  onMount(() => {
+    const onKey = (event) => {
+      if (event.key === "Escape") showMap();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 </script>
 
-<div class="data-view">
+<div class="data-modal">
+<div class="data-view" role="dialog" aria-modal="true" aria-label="Layer data">
   <header class="data-head">
     <div class="data-top">
-      <button type="button" onclick={showMap}>Back to map</button>
-      {#if summary}<p class="muted data-summary">{summary}</p>{/if}
+      {#if summary}<p class="muted data-summary">{summary}</p>{:else}<span></span>{/if}
+      <button type="button" onclick={showMap}>Close</button>
     </div>
 
     <div class="figures">
@@ -154,4 +164,5 @@
       </ul>
     {/if}
   </div>
+</div>
 </div>

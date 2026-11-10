@@ -27,9 +27,8 @@
 
 <div class="shell">
   <MapView />
-  {#if app.mapMode}
-    <Sidebar ready={booted} />
-  {:else}
+  <Sidebar ready={booted} />
+  {#if !app.mapMode}
     <DataView />
   {/if}
   {#if app.toast}
