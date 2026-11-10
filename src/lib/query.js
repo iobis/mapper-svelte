@@ -5,6 +5,23 @@ const AREA_TYPES = {
   mwhs: "World Heritage",
 };
 
+const EDNA_DATASET_TAG = "https://rs.obis.org/obis/vocabulary/DatasetType/EnvironmentalDna";
+const CITIZEN_SCIENCE_DATASET_TAG = "https://rs.obis.org/obis/vocabulary/DatasetType/CitizenScience";
+
+function excludeTags(criteria) {
+  const tags = [];
+  if (criteria.excludeEdna) tags.push(EDNA_DATASET_TAG);
+  if (criteria.excludeCitizenScience) tags.push(CITIZEN_SCIENCE_DATASET_TAG);
+  return tags;
+}
+
+function hasExcludeTag(value, tag) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .includes(tag);
+}
+
 export function areaTypeLabel(type) {
   if (!type) return "";
   return AREA_TYPES[String(type).toLowerCase()] || "";
@@ -41,6 +58,8 @@ export function createQuery(criteria) {
   add(pairs, "geometry", criteria.geometry);
   add(pairs, "flags", criteria.flags);
   add(pairs, "exclude", criteria.exclude);
+  const tags = excludeTags(criteria);
+  if (tags.length) add(pairs, "exclude_tags", tags.join(","));
   add(pairs, "extensions", criteria.extensions);
   if (criteria.hasextensions) {
     const names = Object.keys(criteria.hasextensions).filter((key) => criteria.hasextensions[key]);
@@ -66,6 +85,8 @@ export function criteriaFromLayer(layer) {
     absence: layer.absence,
     redlist: layer.redlist,
     hab: layer.hab,
+    excludeEdna: layer.excludeEdna,
+    excludeCitizenScience: layer.excludeCitizenScience,
     flags: layer.flags,
     exclude: layer.exclude,
     hasextensions: layer.hasextensions,
@@ -105,6 +126,8 @@ export function hasFilters(criteria) {
     extensions ||
       criteria.hab ||
       criteria.redlist ||
+      criteria.excludeEdna ||
+      criteria.excludeCitizenScience ||
       criteria.dropped ||
       criteria.absence ||
       criteria.taxa?.length ||
@@ -146,6 +169,8 @@ export function criteriaKey(criteria) {
     criteria.absence,
     criteria.redlist,
     criteria.hab,
+    criteria.excludeEdna,
+    criteria.excludeCitizenScience,
     criteria.flags,
     criteria.exclude,
     criteria.hasextensions?.MeasurementOrFact,
@@ -182,6 +207,8 @@ export function layerFieldsFromCriteria(criteria) {
     absence: triState(criteria.absence),
     redlist: Boolean(criteria.redlist),
     hab: Boolean(criteria.hab),
+    excludeEdna: Boolean(criteria.excludeEdna),
+    excludeCitizenScience: Boolean(criteria.excludeCitizenScience),
     flags: criteria.flags || null,
     exclude: criteria.exclude || null,
     hasextensions: {
@@ -205,6 +232,8 @@ export function blankFromQuery(query) {
     absence: triState(query.absence),
     redlist: query.redlist === "true" || query.redlist === true,
     hab: query.hab === "true" || query.hab === true,
+    excludeEdna: hasExcludeTag(query.exclude_tags, EDNA_DATASET_TAG),
+    excludeCitizenScience: hasExcludeTag(query.exclude_tags, CITIZEN_SCIENCE_DATASET_TAG),
     flags: query.flags || null,
     exclude: query.exclude || null,
     hasextensions: query.hasextensions || { MeasurementOrFact: false, DNADerivedData: false },
@@ -240,6 +269,8 @@ export function describe(layer) {
   if (layer.absence === "include") lines.push("Absence records included");
   if (layer.redlist) lines.push("Only Red List species");
   if (layer.hab) lines.push("Only HAB species");
+  if (layer.excludeEdna) lines.push("Exclude eDNA");
+  if (layer.excludeCitizenScience) lines.push("Exclude citizen science");
   if (layer.flags) lines.push(`Flags: ${layer.flags}`);
   if (layer.exclude) lines.push(`Exclude: ${layer.exclude}`);
   return lines;

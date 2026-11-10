@@ -182,6 +182,8 @@
     </label>
     <label class="check"><input type="checkbox" bind:checked={app.criteria.redlist} /> Only Red List species</label>
     <label class="check"><input type="checkbox" bind:checked={app.criteria.hab} /> Only HAB species</label>
+    <label class="check"><input type="checkbox" bind:checked={app.criteria.excludeEdna} /> Exclude eDNA</label>
+    <label class="check"><input type="checkbox" bind:checked={app.criteria.excludeCitizenScience} /> Exclude citizen science</label>
   </details>
 
   <details open>

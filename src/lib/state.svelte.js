@@ -30,6 +30,8 @@ function defaultCriteria() {
     absence: "",
     redlist: false,
     hab: false,
+    excludeEdna: false,
+    excludeCitizenScience: false,
     flags: null,
     exclude: null,
     hasextensions: { MeasurementOrFact: false, DNADerivedData: false },
@@ -156,6 +158,8 @@ export function loadCriteria(layer) {
   app.criteria.absence = layer.absence || "";
   app.criteria.redlist = Boolean(layer.redlist);
   app.criteria.hab = Boolean(layer.hab);
+  app.criteria.excludeEdna = Boolean(layer.excludeEdna);
+  app.criteria.excludeCitizenScience = Boolean(layer.excludeCitizenScience);
   app.criteria.flags = layer.flags || null;
   app.criteria.exclude = layer.exclude || null;
   app.criteria.hasextensions = {
