@@ -31,6 +31,16 @@
     return String(value || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
   }
 
+  function pageEnd(table, pageSize) {
+    return table.pageIndex * pageSize + table.data.length;
+  }
+
+  function canGoNext(table, pageSize) {
+    if (!table.data.length || table.data.length < pageSize) return false;
+    if (table.total == null) return true;
+    return pageEnd(table, pageSize) < table.total;
+  }
+
   onMount(() => {
     const onKey = (event) => {
       if (event.key === "Escape") showMap();
@@ -85,11 +95,7 @@
 
   <div class="data-scroll">
     {#if section === "occurrences"}
-      <div class="pager">
-        <button type="button" disabled={app.dataTable.pageIndex === 0} onclick={previousOccurrences}>Previous</button>
-        <span>{app.dataTable.pageIndex + 1}</span>
-        <button type="button" disabled={app.dataTable.data.length < config.pageSize} onclick={nextOccurrences}>Next</button>
-      </div>
+      {@render pager(app.dataTable, config.pageSize, "record", "records", previousOccurrences, nextOccurrences)}
       <div class="table-wrap">
         <table class="data-table">
           <thead>
@@ -114,11 +120,7 @@
         </table>
       </div>
     {:else if section === "checklist"}
-      <div class="pager">
-        <button type="button" disabled={app.checklistTable.pageIndex === 0} onclick={previousChecklist}>Previous</button>
-        <span>{app.checklistTable.pageIndex + 1}</span>
-        <button type="button" disabled={app.checklistTable.data.length < config.pageSize} onclick={nextChecklist}>Next</button>
-      </div>
+      {@render pager(app.checklistTable, config.pageSize, "taxon", "taxa", previousChecklist, nextChecklist)}
       <div class="table-wrap">
         <table class="data-table">
           <thead>
@@ -146,11 +148,7 @@
         </table>
       </div>
     {:else}
-      <div class="pager">
-        <button type="button" disabled={app.datasetTable.pageIndex === 0} onclick={previousDatasets}>Previous</button>
-        <span>{app.datasetTable.pageIndex + 1}</span>
-        <button type="button" disabled={app.datasetTable.data.length < config.datasetPageSize} onclick={nextDatasets}>Next</button>
-      </div>
+      {@render pager(app.datasetTable, config.datasetPageSize, "dataset", "datasets", previousDatasets, nextDatasets)}
       <ul class="dataset-list">
         {#each app.datasetTable.data as record (record.id)}
           <li>
@@ -166,3 +164,23 @@
   </div>
 </div>
 </div>
+
+{#snippet pager(table, pageSize, singular, plural, previous, next)}
+  {@const start = table.data.length ? table.pageIndex * pageSize + 1 : 0}
+  {@const end = pageEnd(table, pageSize)}
+  <div class="pager">
+    <button type="button" disabled={table.pageIndex === 0} onclick={previous}>Previous</button>
+    <button type="button" disabled={!canGoNext(table, pageSize)} onclick={next}>Next</button>
+    <span class="pager-count">
+      {#if table.total == null && !table.data.length}
+        Loading…
+      {:else if table.total === 0}
+        No results
+      {:else if table.total == null}
+        {formatNumber(start)}–{formatNumber(end)}
+      {:else}
+        {formatNumber(start)}–{formatNumber(end)} of {formatNumber(table.total)} {table.total === 1 ? singular : plural}
+      {/if}
+    </span>
+  </div>
+{/snippet}

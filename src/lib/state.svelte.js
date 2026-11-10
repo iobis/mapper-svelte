@@ -59,9 +59,9 @@ export const app = $state({
   statistics: null,
   graph: [],
   dataLoading: false,
-  dataTable: { data: [], pageIndex: 0, after: [null] },
-  checklistTable: { data: [], pageIndex: 0, skip: 0 },
-  datasetTable: { data: [], pageIndex: 0, skip: 0 },
+  dataTable: { data: [], pageIndex: 0, after: [null], total: null },
+  checklistTable: { data: [], pageIndex: 0, skip: 0, total: null },
+  datasetTable: { data: [], pageIndex: 0, skip: 0, total: null },
 });
 
 export { criteriaKey, describe, hasFilters };
@@ -194,9 +194,9 @@ function pageQuery(layer, extra) {
 export async function viewData(layer) {
   app.selectedLayerId = layer.id;
   app.mapMode = false;
-  app.dataTable = { data: [], pageIndex: 0, after: [null] };
-  app.checklistTable = { data: [], pageIndex: 0, skip: 0 };
-  app.datasetTable = { data: [], pageIndex: 0, skip: 0 };
+  app.dataTable = { data: [], pageIndex: 0, after: [null], total: null };
+  app.checklistTable = { data: [], pageIndex: 0, skip: 0, total: null };
+  app.datasetTable = { data: [], pageIndex: 0, skip: 0, total: null };
   app.statistics = null;
   app.graph = [];
   app.dataLoading = true;
@@ -241,6 +241,7 @@ export async function fetchOccurrences() {
   );
   const token = ++occurrenceToken;
   app.dataTable.data = data.results || [];
+  app.dataTable.total = resultTotal(data);
   await attachDatasetTitles(token);
 }
 
@@ -249,6 +250,7 @@ export async function fetchChecklist() {
   if (!layer) return;
   const data = await api.checklist(pageQuery(layer, { size: config.pageSize, skip: app.checklistTable.skip }), createQuery);
   app.checklistTable.data = data.results || [];
+  app.checklistTable.total = resultTotal(data);
 }
 
 export async function fetchDatasets() {
@@ -256,6 +258,7 @@ export async function fetchDatasets() {
   if (!layer) return;
   const data = await api.datasets(pageQuery(layer, { size: config.datasetPageSize, skip: app.datasetTable.skip }), createQuery);
   app.datasetTable.data = data.results || [];
+  app.datasetTable.total = resultTotal(data);
 }
 
 export async function fetchStatistics() {
@@ -275,8 +278,19 @@ export async function fetchGraph() {
   }
 }
 
+function resultTotal(data) {
+  const total = Number(data?.total);
+  return Number.isFinite(total) ? total : null;
+}
+
+function hasMore(table, pageSize) {
+  if (table.data.length < pageSize) return false;
+  if (table.total == null) return true;
+  return table.pageIndex * pageSize + table.data.length < table.total;
+}
+
 export async function nextOccurrences() {
-  if (app.dataTable.data.length < config.pageSize) return;
+  if (!hasMore(app.dataTable, config.pageSize)) return;
   const last = app.dataTable.data[app.dataTable.data.length - 1];
   app.dataTable.after.push(last?.id ?? null);
   app.dataTable.pageIndex += 1;
@@ -291,7 +305,7 @@ export async function previousOccurrences() {
 }
 
 export async function nextChecklist() {
-  if (app.checklistTable.data.length < config.pageSize) return;
+  if (!hasMore(app.checklistTable, config.pageSize)) return;
   app.checklistTable.pageIndex += 1;
   app.checklistTable.skip += config.pageSize;
   await fetchChecklist();
@@ -305,7 +319,7 @@ export async function previousChecklist() {
 }
 
 export async function nextDatasets() {
-  if (app.datasetTable.data.length < config.datasetPageSize) return;
+  if (!hasMore(app.datasetTable, config.datasetPageSize)) return;
   app.datasetTable.pageIndex += 1;
   app.datasetTable.skip += config.datasetPageSize;
   await fetchDatasets();

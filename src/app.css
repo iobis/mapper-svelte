@@ -507,6 +507,8 @@ th, td {
 
 .pager { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
 
+.pager-count { color: var(--muted); }
+
 .chart {
   display: flex;
   align-items: flex-end;
