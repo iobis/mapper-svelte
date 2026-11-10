@@ -6,7 +6,7 @@
   import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
   import * as api from "../lib/api.js";
   import { config } from "../lib/config.js";
-  import { fillColorExpression, legendSwatch, schemeFor, LEGEND_LABELS } from "../lib/palettes.js";
+  import { fillColorExpression, legendSwatch, pointColor, schemeFor, LEGEND_LABELS } from "../lib/palettes.js";
   import { popupNode } from "../lib/popup.js";
   import { cellsPerTile, encodeGeohash, gridPrecision } from "../lib/grid.js";
   import { createQuery, criteriaFromLayer, describe, polygonToWkt, wktToPolygon } from "../lib/query.js";
@@ -147,7 +147,7 @@
       const labelId = `occ-${layer.id}-labels`;
       const url = occurrenceUrl(layer.query, layer.pointsMode);
       const colors = schemeFor(layer.scale).colors;
-      const color = fillColorExpression(colors);
+      const color = layer.pointsMode ? pointColor(layer.scale) : fillColorExpression(colors);
       const kind = layer.pointsMode ? "circle" : "fill";
       ensureSource(sourceId, url);
       const current = map.getLayer(geomId);
@@ -352,17 +352,25 @@
   <div class="legends">
     {#each app.layers.filter((layer) => layer.visible !== false) as layer (layer.id)}
       <div class="legend">
-        <span>{schemeFor(layer.scale).label}</span>
+        {#if describe(layer).length}
+          <span class="legend-title">{describe(layer).join(" · ")}</span>
+        {/if}
         <div class="legend-bar">
-          {#each schemeFor(layer.scale).colors as color}
-            <i style:background={legendSwatch(color, Number(layer.opacity))}></i>
-          {/each}
+          {#if layer.pointsMode}
+            <i style:background={legendSwatch(pointColor(layer.scale), Number(layer.opacity))}></i>
+          {:else}
+            {#each schemeFor(layer.scale).colors as color}
+              <i style:background={legendSwatch(color, Number(layer.opacity))}></i>
+            {/each}
+          {/if}
         </div>
-        <div class="legend-labels">
-          {#each LEGEND_LABELS as label}
-            <span>{label}</span>
-          {/each}
-        </div>
+        {#if !layer.pointsMode}
+          <div class="legend-labels">
+            {#each LEGEND_LABELS as label}
+              <span>{label}</span>
+            {/each}
+          </div>
+        {/if}
       </div>
     {/each}
   </div>

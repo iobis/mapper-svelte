@@ -81,10 +81,17 @@ a { color: var(--accent); }
 
 .legends { display: flex; flex-direction: column; gap: 6px; }
 
-.legend { display: grid; gap: 3px; min-width: 180px; }
+.legend { display: grid; gap: 3px; width: 180px; }
+
+.legend-title {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
 
 .legend-bar, .legend-labels, .chips {
   display: flex;
+  width: 100%;
 }
 
 .legend-bar i, .chips i {

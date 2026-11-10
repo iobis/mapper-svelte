@@ -43,8 +43,16 @@ export const SCHEMES = {
   },
 };
 
+const LEADING_POINT_SCHEMES = new Set(["hawaii", "viridis", "inferno"]);
+
 export function schemeFor(id) {
   return SCHEMES[id] || SCHEMES.hawaii;
+}
+
+export function pointColor(id) {
+  const colors = schemeFor(id).colors;
+  if (!SCHEMES[id] || LEADING_POINT_SCHEMES.has(id)) return colors[0];
+  return colors[colors.length - 1];
 }
 
 export function fillColorExpression(colors) {
