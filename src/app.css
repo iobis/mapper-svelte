@@ -512,15 +512,18 @@ th, td {
 .chart {
   display: flex;
   align-items: flex-end;
-  gap: 1px;
   height: 48px;
   margin-top: 2px;
-  overflow-x: auto;
 }
 
-.bar-wrap { flex: 1 0 3px; height: 100%; display: flex; align-items: flex-end; }
+.bar-wrap { flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; }
 
-.bar-wrap i { display: block; width: 100%; background: var(--accent); min-height: 1px; }
+.bar-wrap i {
+  display: block;
+  width: 100%;
+  background: linear-gradient(to right, var(--accent) max(50%, calc(100% - 1px)), transparent max(50%, calc(100% - 1px)));
+  min-height: 1px;
+}
 
 .typeahead { position: relative; }
 

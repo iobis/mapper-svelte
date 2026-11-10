@@ -14,18 +14,41 @@
     showMap,
   } from "../lib/state.svelte.js";
 
+  const timelineStart = 1950;
+
   let section = $state("occurrences");
   let layer = $derived(app.layers.find((item) => item.id === app.selectedLayerId));
   let summary = $derived(layer ? describe(layer).join(" · ") : "");
-  let maxRecords = $derived(Math.max(...app.graph.map((item) => item.records || 0), 1));
-  let firstYear = $derived(app.graph[0]?.year);
-  let lastYear = $derived(app.graph[app.graph.length - 1]?.year);
+  let timeline = $derived(buildTimeline(app.graph));
+  let maxRecords = $derived(Math.max(...timeline.map((item) => item.records || 0), 1));
+  let firstYear = $derived(timeline[0]?.year);
+  let lastYear = $derived(timeline[timeline.length - 1]?.year);
 
   const sections = [
     ["occurrences", "Occurrences"],
     ["checklist", "Checklist"],
     ["datasets", "Datasets"],
   ];
+
+  function buildTimeline(rows) {
+    const counts = new Map();
+    for (const item of rows || []) {
+      const year = Number(item.year);
+      if (Number.isFinite(year)) counts.set(year, item.records || 0);
+    }
+    if (!counts.size) return [];
+    const years = [...counts.keys()];
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
+    const currentYear = new Date().getFullYear();
+    const startYear = Math.min(timelineStart, minYear);
+    const endYear = Math.max(currentYear, maxYear);
+    const bars = [];
+    for (let year = startYear; year <= endYear; year++) {
+      bars.push({ year, records: counts.get(year) || 0 });
+    }
+    return bars;
+  }
 
   function plain(value) {
     return String(value || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -72,11 +95,11 @@
       {/if}
     </div>
 
-    {#if app.graph.length}
+    {#if timeline.length}
       <div class="chart" aria-label="Records by year">
-        {#each app.graph as bar}
+        {#each timeline as bar (bar.year)}
           <div class="bar-wrap" title="{bar.year}: {formatNumber(bar.records)}">
-            <i style:height="{(bar.records / maxRecords) * 100}%"></i>
+            <i style:height="{bar.records ? (bar.records / maxRecords) * 100 : 0}%" style:min-height={bar.records ? "1px" : "0"}></i>
           </div>
         {/each}
       </div>
