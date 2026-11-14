@@ -10,7 +10,7 @@
   import { popupNode } from "../lib/popup.js";
   import { cellsPerTile, encodeGeohash, gridPrecision } from "../lib/grid.js";
   import { createQuery, criteriaFromLayer, describe, polygonToWkt, wktToPolygon } from "../lib/query.js";
-  import { app, toast } from "../lib/state.svelte.js";
+  import { app, setMapBoundsGetter, toast } from "../lib/state.svelte.js";
 
   // Served from public/ so Vite does not inject its client into the worker.
   setWorkerUrl(`${import.meta.env.BASE_URL}maplibre-gl-worker.mjs`);
@@ -325,6 +325,7 @@
       }
     });
 
+    setMapBoundsGetter(() => (map ? map.getBounds() : null));
     const observer = new ResizeObserver(() => map.resize());
     observer.observe(container);
     const onKey = (event) => {
@@ -335,6 +336,7 @@
     return () => {
       window.removeEventListener("keydown", onKey);
       observer.disconnect();
+      setMapBoundsGetter(null);
       draw?.stop();
       map.remove();
     };

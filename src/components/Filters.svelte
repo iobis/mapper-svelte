@@ -4,7 +4,7 @@
   import { formatNumber } from "../lib/format.js";
   import { SCHEMES, legendSwatch } from "../lib/palettes.js";
   import { areaTypeLabel } from "../lib/query.js";
-  import { app, saveLayer } from "../lib/state.svelte.js";
+  import { app, saveLayer, selectViewport } from "../lib/state.svelte.js";
   import Typeahead from "./Typeahead.svelte";
 
   const currentYear = new Date().getFullYear();
@@ -129,9 +129,12 @@
     {:else}
       <p class="muted">No polygon selected.</p>
     {/if}
-    <button type="button" class:primary={app.drawing} onclick={() => (app.drawing = !app.drawing)}>
-      {app.drawing ? "Cancel drawing" : "Draw polygon"}
-    </button>
+    <div class="actions">
+      <button type="button" class:primary={app.drawing} onclick={() => (app.drawing = !app.drawing)}>
+        {app.drawing ? "Cancel drawing" : "Draw polygon"}
+      </button>
+      <button type="button" onclick={selectViewport}>Use current viewport</button>
+    </div>
   </details>
 
   <details>

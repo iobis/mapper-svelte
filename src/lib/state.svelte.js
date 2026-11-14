@@ -11,7 +11,34 @@ import {
   extractQuery,
   hasFilters,
   layerFieldsFromCriteria,
+  polygonToWkt,
 } from "./query.js";
+
+let mapBounds = null;
+
+export function setMapBoundsGetter(getter) {
+  mapBounds = getter;
+}
+
+export function selectViewport() {
+  const bounds = mapBounds?.();
+  if (!bounds) {
+    toast("Map is not ready");
+    return;
+  }
+  const west = bounds.getWest();
+  const south = bounds.getSouth();
+  const east = bounds.getEast();
+  const north = bounds.getNorth();
+  app.drawing = false;
+  app.criteria.wkt = polygonToWkt([
+    [west, south],
+    [east, south],
+    [east, north],
+    [west, north],
+    [west, south],
+  ]);
+}
 
 function defaultCriteria() {
   return {
