@@ -51,7 +51,7 @@
               Other options are listed at <a href="https://obis.org/data/access/" target="_blank" rel="noopener noreferrer">obis.org/data/access</a>.
             </p>
           {:else}
-            <p>Enter an email address. You will be notified when the file is ready. Separate multiple addresses with a semicolon.</p>
+            <p>Enter an email address. You will be notified when the file is ready.</p>
             <input type="text" placeholder="Email" bind:value={app.email} />
             <div class="extensions">
               <p>Select extensions to include:</p>
